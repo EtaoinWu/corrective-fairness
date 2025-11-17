@@ -13,7 +13,11 @@ from .mdp import CreditDistribution, Policy, Reward, SuccessProb
 def _generalized_threshold_match(
     a: Float[Array, " n"],
     w: Float[Scalar, ""],
-) -> Float[Array, " n"]:
+    inverse: bool = True,
+    cdf: Float[Array, " n"] | None = None,
+    dual: Float[Array, " n"] | None = None,
+    dual_cum: Float[Array, " (n+1)"] | None = None,
+) -> Float[Array, " n"] | Float[Scalar, ""]:
     """
     Find a generalized threshold function with an inner product constraint.
     A generalized threshold function looks like [0, ..., 0, c, 1, ..., 1].
@@ -31,17 +35,27 @@ def _generalized_threshold_match(
     float[n]
         Generalized threshold function.
     """
-    a = a[::-1]
-    cdf = a.cumsum()
+    if inverse:
+        a = a[::-1]
+        cdf = None
+    if cdf is None:
+        cdf = a.cumsum()
     idx = jnp.searchsorted(cdf, w, side="left")
-    x = (jnp.arange(a.shape[0]) < idx).astype(float)
+    if dual is None or dual_cum is None:
+        x = (jnp.arange(a.shape[0]) < idx).astype(float)
+    else:
+        x = dual_cum[idx]
     below = cast(
         Float[Scalar, ""],
         jax.lax.cond(idx > 0, lambda: cdf[idx - 1], lambda: 0.0),
     )
-    x = x.at[idx].add((w - below) / a[idx])
-    return x[::-1]
-
+    if dual is None or dual_cum is None:
+        x = x.at[idx].add((w - below) / a[idx])
+        if inverse:
+            x = x[::-1]
+    else:
+        x = x + dual[idx] * (w - below) / a[idx]
+    return x
 
 @jax.jit
 @typed

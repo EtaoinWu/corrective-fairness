@@ -132,8 +132,42 @@ def tree_unstack(tree):
     [((a[0], b[0]), c[0]), ..., ((a[k], b[k]), c[k])]
     Useful for turning the output of a vmapped function into normal objects.
     """
-    leaves, treedef = jt.flatten(tree)
-    n_trees = leaves[0].shape[0]
-    for i in range(n_trees):
-        new_leaves = [leaf[i] for leaf in leaves]
-        yield treedef.unflatten(new_leaves)
+    # leaves, treedef = jt.flatten(tree)
+    # n_trees = leaves[0].shape[0]
+    # for i in range(n_trees):
+    #     new_leaves = [leaf[i] for leaf in leaves]
+    #     yield treedef.unflatten(new_leaves)
+    return Unstacked(tree)
+
+
+class UnstackedIter:
+    def __init__(self, unstacked):
+        self.unstacked = unstacked
+        self.index = 0
+
+    def __next__(self):
+        if self.index >= len(self.unstacked):
+            raise StopIteration
+        item = self.unstacked[self.index]
+        self.index += 1
+        return item
+
+    def __iter__(self):
+        return self
+
+class Unstacked:
+    def __init__(self, tree):
+        self.tree = tree
+        self.leaves, self.treedef = jt.flatten(tree)
+        self.n_trees = self.leaves[0].shape[0]
+    
+    def __getitem__(self, index):
+        new_leaves = [leaf[index] for leaf in self.leaves]
+        return self.treedef.unflatten(new_leaves)
+    
+    def __len__(self):
+        return self.n_trees
+    
+    def __iter__(self):
+        return UnstackedIter(self)
+    
