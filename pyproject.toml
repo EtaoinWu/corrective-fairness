@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "matplotlib>=3.10.7",
-    "mdpax>=0.2.2 ; sys_platform != 'linux'",
+    "mdpax>=0.2.2",
     "numpy>=2.3.4",
     "seaborn>=0.13.2",
     "tqdm>=4.67.1",
@@ -15,8 +15,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "chex>=0.1.91",
     "ipykernel>=7.1.0",
     "ipywidgets>=8.1.8",
+    "marimo>=0.17.8",
+    "pytest>=9.0.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -46,3 +49,6 @@ ignore = ["F722", "E741"]
 [tool.ruff.lint.isort]
 force-wrap-aliases = true
 combine-as-imports = true
+
+[tool.pyrefly]
+project-includes = ["fairsim", "test", "notebooks"]
