@@ -1,5 +1,6 @@
 """Model for the creditworthiness MDP model."""
 
+import functools as ft
 
 import jax
 import jax.numpy as jnp
@@ -15,6 +16,8 @@ type SuccessProb = Float[Array, " n_states"]  # monotonic
 # each innermost row sums to 1
 # kernel[i, j]: the distribution of score change for action i and outcome j
 type TransitionKernel = Float[Array, "2 2 n_kernel"]
+type NoiseKernel = Float[Array, " n_noise"]  # Sums to 1
+type Transition = tuple[TransitionKernel, NoiseKernel]
 
 
 @typed
@@ -33,13 +36,26 @@ def transition_kernel_construct(
     return jnp.array([[rt, dt], [ut, ut]])
 
 
+@typed
+def construct_transition(
+    repay: Real[Array, " n_transition"],
+    default: Real[Array, " n_transition"],
+    reject: Real[Array, " n_transition"],
+    noise: Real[Array, " n_noise"],
+) -> Transition:
+    repay, default, reject, noise = [
+        z / z.sum() for z in [repay, default, reject, noise]
+    ]
+    return (jnp.array([[repay, default], [reject, reject]]), noise)
+
+
 @jax.jit
 @typed
 def transition(
     dis: CreditDistribution,
     pol: Policy,
     suc: SuccessProb,
-    kern: TransitionKernel,
+    kern: TransitionKernel | Transition,
 ) -> CreditDistribution:
     """
     Transition of the credit distribution given a policy.
@@ -67,6 +83,12 @@ def transition(
         * jnp.stack([pol, 1 - pol])[:, None, :]
         * jnp.stack([suc, 1 - suc])[None, :, :]
     )
-    next_dis = jax.vmap(jax.vmap(convolve_clipped))(action_dis, kern)
-    return next_dis.sum(axis=0).sum(axis=0)
+    if isinstance(kern, tuple):
+        mat, noise = kern
+        next_dis = jax.vmap(jax.vmap(convolve_clipped))(action_dis, mat)
+        next_dis = jax.vmap(jax.vmap(ft.partial(convolve_clipped, b=noise)))(next_dis)
+        return next_dis.sum(axis=0).sum(axis=0)
+    else:
+        next_dis = jax.vmap(jax.vmap(convolve_clipped))(action_dis, kern)
+        return next_dis.sum(axis=0).sum(axis=0)
 
