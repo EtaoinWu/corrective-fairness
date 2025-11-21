@@ -4,6 +4,7 @@ import functools as ft
 
 import jax
 import jax.numpy as jnp
+import typinox as tpx
 from jaxtyping import Array, Float, Real
 
 from ..util import convolve_clipped, typed
@@ -86,9 +87,23 @@ def transition(
     if isinstance(kern, tuple):
         mat, noise = kern
         next_dis = jax.vmap(jax.vmap(convolve_clipped))(action_dis, mat)
-        next_dis = jax.vmap(jax.vmap(ft.partial(convolve_clipped, b=noise)))(next_dis)
+        next_dis = jax.vmap(jax.vmap(ft.partial(convolve_clipped, b=noise)))(
+            next_dis
+        )
         return next_dis.sum(axis=0).sum(axis=0)
     else:
         next_dis = jax.vmap(jax.vmap(convolve_clipped))(action_dis, kern)
         return next_dis.sum(axis=0).sum(axis=0)
 
+
+class Setting(tpx.TypedModule):
+    reward: Reward
+    success_prob: SuccessProb
+    trans: Transition | TransitionKernel
+
+    def transition(
+        self,
+        dis: CreditDistribution,
+        pol: Policy,
+    ) -> CreditDistribution:
+        return transition(dis, pol, self.success_prob, self.trans)

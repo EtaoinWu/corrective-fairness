@@ -8,6 +8,7 @@ dependencies = [
     "matplotlib>=3.10.7",
     "mdpax>=0.2.2",
     "numpy>=2.3.4",
+    "optax>=0.2.6",
     "seaborn>=0.13.2",
     "tqdm>=4.67.1",
     "typinox>=0.4.0",
