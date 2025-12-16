@@ -2,8 +2,9 @@ from typing import cast
 
 import jax
 import jax.numpy as jnp
-from beartype.typing import Callable
+from beartype.typing import Callable, Literal
 from jaxtyping import Array, Float, Scalar, ScalarLike
+from mpax import create_lp, r2HPDHG, raPDHG
 from typinox import Vmapped
 
 from fairsim.util import typed
@@ -208,3 +209,55 @@ def joint_opt_equal_opportunity(
         )[::-1]
     
     return best_tpr, jax.vmap(single_tpr)(caps, capsums, ccaps)
+
+
+solvers = {
+    'r2HPDHG': r2HPDHG(eps_abs=1e-5, eps_rel=1e-5, verbose=False),
+    'raPDHG': raPDHG(eps_abs=1e-5, eps_rel=1e-5, verbose=False),
+}
+
+
+@jax.jit
+@typed
+def joint_opt_equalized_odds(
+    dis: Vmapped[CreditDistribution, " n_groups"],
+    weights: Float[Array, " n_groups"],
+    suc: SuccessProb,
+    rew: Reward,
+    solver: Literal['r2HPDHG', 'raPDHG'] = 'r2HPDHG',
+) -> tuple[Float[Scalar, ""], Vmapped[Policy, " n_groups"]]:
+    """Jointly optimize myopic rewards, given that the TPR and TNR are the same.
+
+    Parameters
+    ----------
+    dis : (float[n_states], sum to 1)[n_groups]
+        The score distribution for each group.
+    weights : float[n_groups]
+        The population of each group.
+    suc : float[n_states], monotonic
+        The success probability for every score.
+    rew : float[n_states], monotonic
+        The reward for every score.
+
+    Returns
+    -------
+    threshold : float
+        The optimal TPR.
+    policies : (float[n_states])[n_groups]
+        The corresponding policies for each group.
+    """
+    l, u = 0, 1
+    c = (dis * weights[:, None] * rew[None, :]).flatten()
+    n = suc.shape[0]
+    a0l = dis[0] * suc
+    a0r = dis[1] * suc
+    a1l = dis[0] * (1 - suc)
+    a1r = dis[1] * (1 - suc)
+    a0l, a0r, a1l, a1r = map(lambda x: x / x.sum(), (a0l, a0r, a1l, a1r))
+    a = jnp.block([[a0l, -a0r], [a1l, -a1r]])
+    b = jnp.array([0.0, 0.0])
+    g = jnp.zeros((0, n * 2))
+    h = jnp.array([])
+    lp = create_lp(-c, a, b, g, h, l, u, use_sparse_matrix=False)
+    result = solvers[solver].optimize(lp)
+    return jnp.array(0.0), result.primal_solution.reshape((2, n))

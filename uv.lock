@@ -2,7 +2,8 @@ version = 1
 revision = 3
 requires-python = ">=3.14"
 resolution-markers = [
-    "sys_platform != 'linux'",
+    "platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')",
     "sys_platform == 'linux'",
 ]
 
@@ -190,6 +191,8 @@ source = { virtual = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "mdpax" },
+    { name = "mpax", version = "0.2.2", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "mpax", version = "0.2.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
     { name = "numpy" },
     { name = "optax" },
     { name = "seaborn" },
@@ -210,6 +213,7 @@ dev = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "mdpax", specifier = ">=0.2.2" },
+    { name = "mpax", specifier = ">=0.2.2" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "optax", specifier = ">=0.2.6" },
     { name = "seaborn", specifier = ">=0.13.2" },
@@ -792,6 +796,41 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/53/21/783dfb51f40d2660afeb9bccf3612b99f6a803d980d2a09132b0f9d216ab/ml_dtypes-0.5.3-cp314-cp314t-macosx_10_13_universal2.whl", hash = "sha256:e12e29764a0e66a7a31e9b8bf1de5cc0423ea72979f45909acd4292de834ccd3", size = 689324, upload-time = "2025-07-29T18:39:07.567Z" },
     { url = "https://files.pythonhosted.org/packages/09/f7/a82d249c711abf411ac027b7163f285487f5e615c3e0716c61033ce996ab/ml_dtypes-0.5.3-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:19f6c3a4f635c2fc9e2aa7d91416bd7a3d649b48350c51f7f715a09370a90d93", size = 5275917, upload-time = "2025-07-29T18:39:09.339Z" },
     { url = "https://files.pythonhosted.org/packages/7f/3c/541c4b30815ab90ebfbb51df15d0b4254f2f9f1e2b4907ab229300d5e6f2/ml_dtypes-0.5.3-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5ab039ffb40f3dc0aeeeba84fd6c3452781b5e15bef72e2d10bcb33e4bbffc39", size = 5285284, upload-time = "2025-07-29T18:39:11.532Z" },
+]
+
+[[package]]
+name = "mpax"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine == 'x86_64' and sys_platform == 'darwin'",
+]
+dependencies = [
+    { name = "chex", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "jax", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/34/06/e07cd66991a5a7aa31bfa02b87ae5a091e28f2e28a2568f28f4f14988223/mpax-0.2.2.tar.gz", hash = "sha256:0a2b8fb9e8bb23fc6746fbf8dfdd0cbac1d3e0e646fe59fb1d3cce5e217f1cd5", size = 45144, upload-time = "2025-05-08T21:56:01.22Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/0f/e6374394a690f904473380fa008a690a61378bf674df9103580c1146feec/mpax-0.2.2-py3-none-any.whl", hash = "sha256:a89f263620615f7ce94083ab38209db7b780fe3ce20d817f569fb1cc46d56862", size = 48489, upload-time = "2025-05-08T21:55:59.691Z" },
+]
+
+[[package]]
+name = "mpax"
+version = "0.2.4"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'linux')",
+    "sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "chex", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "jax", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "numpy", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/0d/dc4ba58a64b2c104bae09383c9e17eca052f24410a0d9155c75ff0d97837/mpax-0.2.4.tar.gz", hash = "sha256:b34f11168d5fd88075cd0f7082b94f58ff36ae0508bea6bb5ca908d3b08b0922", size = 45282, upload-time = "2025-05-14T21:34:31.098Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/84/2681ace1aaebf78762f46ebab54ff3d603aee39817cd68c5a19f699165f5/mpax-0.2.4-py3-none-any.whl", hash = "sha256:85a3df11f3ba7588b0f51990754db880f2ccd73f15081d1fddc59798abad191d", size = 48562, upload-time = "2025-05-14T21:34:29.757Z" },
 ]
 
 [[package]]
